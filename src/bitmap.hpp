@@ -30,13 +30,13 @@ struct bmp_info_header{
     uint32_t bih_clr_imported;
 };
 
-#pragma pack(pop)
-
 struct rgb{
     uint8_t b;
     uint8_t g;
     uint8_t r;
 };
+
+#pragma pack(pop)
 
 class bitmap{
 private:
@@ -101,13 +101,12 @@ bitmap::bitmap(const int width, const int height, const std::vector<uint8_t> r, 
 }
 
 int bitmap::get_width() const { return width; }
-
 int bitmap::get_height() const { return height; }
-
 std::vector<rgb> bitmap::get_pixels() const { return pixels; }
 std::vector<uint8_t> bitmap::get_r() const { return r; }
 std::vector<uint8_t> bitmap::get_g() const { return g; }
 std::vector<uint8_t> bitmap::get_b() const { return b; }
+
 void bitmap::set_pixels(const std::vector<rgb> pixels){
     this->pixels = pixels;
     r.resize(pixels.size());
@@ -176,14 +175,14 @@ void bitmap::load(const std::string filename){
 
     file.seekg(file_header.bfh_off_bits, std::ios::beg);
 
-    for(int y = height - 1; y >= 0; y--){
+    for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
             rgb pixel;
             file.read(reinterpret_cast<char*>(&pixel), sizeof(rgb));
-            pixels.at(y*width + x) = pixel;
-            r.at(y*width + x) = pixel.r;
-            g.at(y*width + x) = pixel.g;
-            b.at(y*width + x) = pixel.b;
+            pixels.at(y* width + x) = pixel;
+            r.at(y* width + x) = pixel.r;
+            g.at(y* width + x) = pixel.g;
+            b.at(y* width + x) = pixel.b;
         }
         file.ignore(row_padding);
     }
@@ -219,11 +218,11 @@ void bitmap::save(const std::string filename){
 
     uint8_t padding[3] = {0, 0, 0};
 
-    for(int y = height - 1; y >= 0; y--){
+    for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
-            rgb pixel = pixels.at(y * width + x);
+            rgb pixel = pixels.at(y * width+ x);
             file.write(reinterpret_cast<const char*>(&pixel), sizeof(pixel));
         }
-        file.write(reinterpret_cast<const char*>(padding), sizeof(padding));
+        file.write(reinterpret_cast<const char*>(padding), row_padding);
     }
 }
