@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -40,29 +39,22 @@ struct rgb{
 
 class bitmap{
 private:
-    int width = 0;
-    int height = 0;
-    std::vector<rgb> pixels;
-    std::vector<uint8_t> r;
-    std::vector<uint8_t> g;
-    std::vector<uint8_t> b;
+    int height;
+    int width;
+    rgb** pixels;
 
 public:
     bitmap(const std::string filename);
-    bitmap(const int width, const int height, const std::vector<rgb> pixels);
-    bitmap(const int width, const int height, const std::vector<uint8_t> r, const std::vector<uint8_t> g, const std::vector<uint8_t> b);
+    bitmap(const int height, const int width, rgb** pixels);
+
+    ~bitmap();
 
     int get_width() const;
     int get_height() const;
-    std::vector<rgb> get_pixels() const;
-    std::vector<uint8_t> get_r() const;
-    std::vector<uint8_t> get_g() const;
-    std::vector<uint8_t> get_b() const;
+    rgb** get_pixels() const;
+    rgb** get_pixels_copy() const;
 
-    void set_pixels(const std::vector<rgb> pixels);
-    void set_r(const std::vector<uint8_t> r);
-    void set_g(const std::vector<uint8_t> g);
-    void set_b(const std::vector<uint8_t> b);
+    void set_image(const int height, const int width, const rgb** pixels);
 
     void load(const std::string filename);    
     void save(const std::string filename);
@@ -72,71 +64,38 @@ bitmap::bitmap(const std::string filename){
     this->load(filename);
 }
 
-bitmap::bitmap(const int width, const int height, const std::vector<rgb> pixels){
+bitmap::bitmap(const int height, const int width, rgb** pixels){
     this->width = width;
     this->height = height;
-    this->pixels = pixels;
-    r.resize(pixels.size());
-    g.resize(pixels.size());
-    b.resize(pixels.size());
-    for(int i = 0; i < pixels.size(); i++){
-        r.at(i) = pixels.at(i).r;
-        g.at(i) = pixels.at(i).g;
-        b.at(i) = pixels.at(i).b;
+    this->pixels = new rgb*[height];
+    for(int h = 0; h < height; h++){
+        this->pixels[h] = new rgb[width];
+        for(int w = 0; w < width; w++){
+            this->pixels[h][w] = pixels[h][w];
+        }
     }
 }
 
-bitmap::bitmap(const int width, const int height, const std::vector<uint8_t> r, const std::vector<uint8_t> g, const std::vector<uint8_t> b){
-    this->width = width;
-    this->height = height;
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    pixels.resize(r.size());
-    for(int i = 0; i < r.size(); i++){
-        pixels.at(i).r = r.at(i);
-        pixels.at(i).g = g.at(i);
-        pixels.at(i).b = b.at(i);
+bitmap::~bitmap(){
+    for(int i = 0; i < height; i++){
+        delete[] pixels[i];
     }
+    delete[] pixels;
 }
 
 int bitmap::get_width() const { return width; }
 int bitmap::get_height() const { return height; }
-std::vector<rgb> bitmap::get_pixels() const { return pixels; }
-std::vector<uint8_t> bitmap::get_r() const { return r; }
-std::vector<uint8_t> bitmap::get_g() const { return g; }
-std::vector<uint8_t> bitmap::get_b() const { return b; }
+rgb** bitmap::get_pixels() const { return pixels; }
 
-void bitmap::set_pixels(const std::vector<rgb> pixels){
-    this->pixels = pixels;
-    r.resize(pixels.size());
-    g.resize(pixels.size());
-    b.resize(pixels.size());
-    for(int i = 0; i < pixels.size(); i++){
-        r.at(i) = pixels.at(i).r;
-        g.at(i) = pixels.at(i).g;
-        b.at(i) = pixels.at(i).b;
+void bitmap::set_image(const int height, const int width, const rgb** pixels){
+    if((this->height != height) || (this->width != width)){
+        std::cerr << "Must have the same height x width of orginal image!" << std::endl;
+        return;
     }
-}
-
-void bitmap::set_r(const std::vector<uint8_t> r){
-    this->r = r;
-    for(int i = 0; i < r.size(); i++){
-        pixels.at(i).r = r.at(i);
-    }
-}
-
-void bitmap::set_g(const std::vector<uint8_t> g){
-    this->g = g;
-    for(int i = 0; i < g.size(); i++){
-        pixels.at(i).g = g.at(i);
-    }
-}
-
-void bitmap::set_b(const std::vector<uint8_t> b){
-    this->b = b;
-    for(int i = 0; i < b.size(); i++){
-        pixels.at(i).b = b.at(i);
+    for(int h = 0; h < height; h++){
+        for(int w = 0; w < width; w++){
+            this->pixels[h][w] = pixels[h][w];
+        }
     }
 }
 
@@ -168,10 +127,10 @@ void bitmap::load(const std::string filename){
 
     int row_padding = (4 - (width * 3) % 4) % 4;
 
-    pixels.resize(height * width);
-    r.resize(height * width);
-    g.resize(height * width);
-    b.resize(height * width);
+    pixels = new rgb* [height];
+    for(int i = 0; i < height; i++){
+        pixels[i] = new rgb[width];
+    }
 
     file.seekg(file_header.bfh_off_bits, std::ios::beg);
 
@@ -179,10 +138,7 @@ void bitmap::load(const std::string filename){
         for(int x = 0; x < width; x++){
             rgb pixel;
             file.read(reinterpret_cast<char*>(&pixel), sizeof(rgb));
-            pixels.at(y* width + x) = pixel;
-            r.at(y* width + x) = pixel.r;
-            g.at(y* width + x) = pixel.g;
-            b.at(y* width + x) = pixel.b;
+            pixels[y][x] = pixel;
         }
         file.ignore(row_padding);
     }
@@ -220,7 +176,7 @@ void bitmap::save(const std::string filename){
 
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
-            rgb pixel = pixels.at(y * width+ x);
+            rgb pixel = pixels[y][x];
             file.write(reinterpret_cast<const char*>(&pixel), sizeof(pixel));
         }
         file.write(reinterpret_cast<const char*>(padding), row_padding);
