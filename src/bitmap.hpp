@@ -41,20 +41,20 @@ class bitmap{
 private:
     int height;
     int width;
-    rgb** pixels;
+    rgb* pixels;
 
 public:
     bitmap(const std::string filename);
-    bitmap(const int height, const int width, rgb** pixels);
+    bitmap(const int height, const int width, rgb* pixels);
 
     ~bitmap();
 
     int get_width() const;
     int get_height() const;
-    rgb** get_pixels() const;
-    rgb** get_pixels_copy() const;
+    rgb* get_pixels() const;
+    rgb* get_pixels_copy();
 
-    void set_image(const int height, const int width, const rgb** pixels);
+    void set_image(const int height, const int width, const rgb* pixels);
 
     void load(const std::string filename);    
     void save(const std::string filename);
@@ -64,37 +64,43 @@ bitmap::bitmap(const std::string filename){
     this->load(filename);
 }
 
-bitmap::bitmap(const int height, const int width, rgb** pixels){
+bitmap::bitmap(const int height, const int width, rgb* pixels){
     this->width = width;
     this->height = height;
-    this->pixels = new rgb*[height];
+    this->pixels = new rgb[height * width];
     for(int h = 0; h < height; h++){
-        this->pixels[h] = new rgb[width];
         for(int w = 0; w < width; w++){
-            this->pixels[h][w] = pixels[h][w];
+            this->pixels[h * width + w] = pixels[h * width + w];
         }
     }
 }
 
 bitmap::~bitmap(){
-    for(int i = 0; i < height; i++){
-        delete[] pixels[i];
-    }
     delete[] pixels;
 }
 
 int bitmap::get_width() const { return width; }
-int bitmap::get_height() const { return height; }
-rgb** bitmap::get_pixels() const { return pixels; }
 
-void bitmap::set_image(const int height, const int width, const rgb** pixels){
+int bitmap::get_height() const { return height; }
+
+rgb* bitmap::get_pixels() const { return pixels; }
+
+rgb* bitmap::get_pixels_copy(){
+    rgb* copy = new rgb[width * height];
+    for(int i = 0; i < height * width; i++){
+        copy[i] = pixels[i];
+    }
+    return copy;
+}
+
+void bitmap::set_image(const int height, const int width, const rgb* pixels){
     if((this->height != height) || (this->width != width)){
         std::cerr << "Must have the same height x width of orginal image!" << std::endl;
         return;
     }
     for(int h = 0; h < height; h++){
         for(int w = 0; w < width; w++){
-            this->pixels[h][w] = pixels[h][w];
+            this->pixels[h * width + w] = pixels[h * width + w];
         }
     }
 }
@@ -127,10 +133,7 @@ void bitmap::load(const std::string filename){
 
     int row_padding = (4 - (width * 3) % 4) % 4;
 
-    pixels = new rgb* [height];
-    for(int i = 0; i < height; i++){
-        pixels[i] = new rgb[width];
-    }
+    pixels = new rgb[height * width];
 
     file.seekg(file_header.bfh_off_bits, std::ios::beg);
 
@@ -138,7 +141,7 @@ void bitmap::load(const std::string filename){
         for(int x = 0; x < width; x++){
             rgb pixel;
             file.read(reinterpret_cast<char*>(&pixel), sizeof(rgb));
-            pixels[y][x] = pixel;
+            pixels[y * width + x] = pixel;
         }
         file.ignore(row_padding);
     }
@@ -176,7 +179,7 @@ void bitmap::save(const std::string filename){
 
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
-            rgb pixel = pixels[y][x];
+            rgb pixel = pixels[y * width + x];
             file.write(reinterpret_cast<const char*>(&pixel), sizeof(pixel));
         }
         file.write(reinterpret_cast<const char*>(padding), row_padding);
