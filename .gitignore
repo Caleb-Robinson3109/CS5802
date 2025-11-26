@@ -3,3 +3,4 @@ a.out
 out.bmp
 src/*.bmp
 tags
+out_img/*
