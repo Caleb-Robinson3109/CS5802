@@ -11,7 +11,6 @@
 // on campus machines
 #include <openmpi-x86_64/mpi.h>
 
-// BUG: All of the output images are all black. I am not sure why.
 int main(int argc, char* argv[]){
 
     MPI_Init (&argc, &argv);
@@ -46,7 +45,7 @@ int main(int argc, char* argv[]){
 
         // apply filter
         for (int j = 0; j < size; j++) {
-            result[i] = overlay(img1_pixels[i], img2_pixels[i]);
+            result[j] = overlay(img1_pixels[j], img2_pixels[j]);
         }
 
         // output final bitmap
