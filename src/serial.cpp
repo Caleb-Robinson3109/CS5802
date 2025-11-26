@@ -1,20 +1,18 @@
 #include "bitmap.hpp"
 #include "overlay.hpp"
+#include "pathutil.h"
 #include <iostream>
 #include <string>
-
-#define NUM_IMAGES 100
+#include <vector>
 
 int main(){
 
-    for(int i = 1; i <= NUM_IMAGES; i++){
-        // take in bitmaps
-        std::string filename1 = "img1/img1_" + std::to_string(i) + ".bmp";
-        std::string filename2 = "img2/img2_" + std::to_string(i) + ".bmp";
-        std::string output = "out_img/out_" + std::to_string(i) + ".bmp";
+    std::vector<PathSet> paths = generatePaths();
 
-        bitmap img1(filename1);
-        bitmap img2(filename2);
+    for(PathSet currentPaths : paths) {
+
+        bitmap img1(currentPaths.input1Path);
+        bitmap img2(currentPaths.input2Path);
 
         int width = img1.get_width();
         int height = img1.get_height();
@@ -32,7 +30,7 @@ int main(){
 
         // output final bitmap
         bitmap overlayed(width, height, result);
-        overlayed.save(output);
+        overlayed.save(currentPaths.outputPath);
 
         delete[] result;
     }
