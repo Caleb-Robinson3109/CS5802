@@ -1,5 +1,5 @@
 *.o
-a.out
+*.out
 out.bmp
 src/*.bmp
 tags
