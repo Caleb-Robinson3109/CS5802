@@ -1,15 +1,35 @@
 #include "bitmap.hpp"
 #include "overlay.hpp"
-#include "pathutil.h"
+#include "pathutil.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
+#include <stdio.h>
 
-int main(){
+// NOTE: replace with:
+// #include <mpi.h>
+// on campus machines
+#include <openmpi-x86_64/mpi.h>
 
+int main(int argc, char* argv[]){
+
+    MPI_Init (&argc, &argv);
+    int nprocs;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    
     std::vector<PathSet> paths = generatePaths();
 
-    for(PathSet currentPaths : paths) {
+    // Cyclic partitioning
+    for (int i = rank; i < paths.size(); i += nprocs) {
+
+        PathSet currentPaths = paths[i];
+        std::cout << "rank " << rank << ": \n";
+        std::cout << "input 1 :" << currentPaths.input1Path << "\n";
+        std::cout << "input 2 :" << currentPaths.input2Path << "\n";
+        std::cout << "output :" << currentPaths.outputPath << "\n";
+        std::cout << std::endl;
 
         bitmap img1(currentPaths.input1Path);
         bitmap img2(currentPaths.input2Path);
@@ -34,5 +54,7 @@ int main(){
 
         delete[] result;
     }
+    
+    MPI_Finalize();
     return 0;
 }
