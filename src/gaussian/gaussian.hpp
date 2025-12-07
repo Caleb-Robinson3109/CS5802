@@ -11,8 +11,8 @@
 #endif
 
 //probs cant do this on gpu bc/ of the math? idk tho
-int* create_gaussian_filter(const int size, const double sigma = 1);
-DEVICE rgb apply_gaussian_filter(const int** filter, const int size, const rgb** image, const int height, const int width, const  int x, const int y);
+double* create_gaussian_filter(int size, const double sigma);
+DEVICE rgb apply_gaussian_filter(const double* filter, int size, const rgb* image, const int height, const int width, const  int x, const int y);
 
 //filter = gaussian filter
 //size = size of the filter -> size x size
@@ -21,15 +21,38 @@ DEVICE rgb apply_gaussian_filter(const int** filter, const int size, const rgb**
 //width = width of the image
 //x = x pos of pixel to apply filter
 //y = y pos of pixel to apply filter 
-DEVICE rgb apply_gaussian_filter(const int** filter, const int size, const rgb** image, const int height, const int width, const  int x, const int y){
-    
+//x ~ width,  y ~ height
+DEVICE rgb apply_gaussian_filter(const double* filter, int size, const rgb* image, const int height, const int width, const  int x, const int y){
+    rgb result;
+    double result_r = 0.0;
+    double result_g = 0.0;
+    double result_b = 0.0;
+    size = size % 2 == 0 ? size + 1 : size;
+    int half_size = size / 2;
+    for(int filter_y = 0; filter_y < size; filter_y++){
+        for(int filter_x = 0; filter_x < size; filter_x++){
+            //check to make sure not out of bounds of image
+            int image_x = (x - half_size + filter_x) < 0 ? 0 : (x - half_size + filter_x) >= width ? width - 1 : (x - half_size + filter_x);
+            int image_y = (y - half_size + filter_y) < 0 ? 0 : (y - half_size + filter_y) >= height ? height - 1 : (y - half_size + filter_y);
+
+            result_r += image[image_y * width + image_x].r * filter[filter_y * size + filter_x];
+            result_g += image[image_y * width + image_x].g * filter[filter_y * size + filter_x];
+            result_b += image[image_y * width + image_x].b * filter[filter_y * size + filter_x];
+        }
+    }
+    result.r = (uint8_t)std::round(result_r);
+    result.g = (uint8_t)std::round(result_g);
+    result.b = (uint8_t)std::round(result_b);
+
+    return result;
 }
 
 //filter (x,y) = filter[y * size + x]
-int* create_gaussian_filter(const int size, const double sigma = 1){
+double* create_gaussian_filter(int size, const double sigma = 3.0){
+    size = size % 2 == 0 ? size + 1 : size;
     double center = (size - 1) / 2.0;
     double sum = 0.0;
-    int* filter = new int[size * size];
+    double* filter = new double[size * size];
 
     for(int i = 0; i < size; i++){
         for (int j = 0; j < size; j++){
