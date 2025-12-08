@@ -2,11 +2,11 @@
 
 #include "bitmap.hpp"
 #include <cstdint>
-#include <cmath>
 
 #ifdef __CUDACC__
     #define DEVICE __device__
 #else
+    #include <math.h>
     #define DEVICE
 #endif
 
@@ -40,9 +40,11 @@ DEVICE rgb apply_gaussian_filter(const double* filter, int size, const rgb* imag
             result_b += image[image_y * width + image_x].b * filter[filter_y * size + filter_x];
         }
     }
-    result.r = (uint8_t)std::round(result_r);
-    result.g = (uint8_t)std::round(result_g);
-    result.b = (uint8_t)std::round(result_b);
+
+    // switched to c round function because it will be converted to a device intrinsic when compiled with cuda.
+    result.r = (uint8_t)round(result_r);
+    result.g = (uint8_t)round(result_g);
+    result.b = (uint8_t)round(result_b);
 
     return result;
 }
