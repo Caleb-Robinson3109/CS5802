@@ -1,16 +1,17 @@
 #include "bitmap.hpp"
 #include "overlay.hpp"
 #include "pathutil.hpp"
+#include "timerutil.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
 
 int main(){
-
+    Timer timer;
+    timer.start();
     std::vector<PathSet> paths = generatePaths();
 
     for(PathSet currentPaths : paths) {
-
         bitmap img1(currentPaths.input1Path);
         bitmap img2(currentPaths.input2Path);
 
@@ -34,5 +35,7 @@ int main(){
 
         delete[] result;
     }
+    timer.stop();
+    std::cout << "Runtime (ms): " << timer.get_duration_ms() << "\n";
     return 0;
 }
