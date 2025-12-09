@@ -23,6 +23,9 @@ __global__ void kernel(const rgb* img1, const rgb* img2, rgb* result, int height
 
 int main()
 {
+    Timer timer;
+    timer.start();
+
     vector<PathSet> paths = generatePaths();
 
     for(PathSet currentPaths : paths){
@@ -66,5 +69,9 @@ int main()
 
         delete[] result;
     }
+
+    timer.stop();
+    std::cout << "Cuda Overlay Runtime (ms): " << timer.get_duration_ms() << "\n";
+
     return 0;
 }

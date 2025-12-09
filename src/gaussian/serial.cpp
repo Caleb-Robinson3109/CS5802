@@ -7,6 +7,8 @@
 
 int main(){
 
+    Timer timer;
+    timer.start();
     std::vector<PathSet> paths = generatePaths();
 
     for(PathSet currentPaths : paths) {
@@ -38,5 +40,7 @@ int main(){
 
         delete[] result;
     }
+    timer.stop();
+    std::cout << "Serial Gaussian Blur Runtime (ms): " << timer.get_duration_ms() << "\n";
     return 0;
 }

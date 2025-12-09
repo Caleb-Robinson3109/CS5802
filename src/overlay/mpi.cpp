@@ -13,6 +13,9 @@
 
 int main(int argc, char* argv[]){
 
+    Timer timer;
+    timer.start();
+
     MPI_Init (&argc, &argv);
     int nprocs;
     int rank;
@@ -54,7 +57,10 @@ int main(int argc, char* argv[]){
 
         delete[] result;
     }
-    
+
+    timer.stop();
+    std::cout << "MPI Overlay Runtime (ms): " << timer.get_duration_ms() << "\n";
+
     MPI_Finalize();
     return 0;
 }

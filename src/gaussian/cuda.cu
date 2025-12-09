@@ -25,6 +25,9 @@ __global__ void kernel(double * gaussian_filter, int filter_size, rgb* img_pixel
 
 int main()
 {
+
+    Timer timer;
+    timer.start();
     vector<PathSet> paths = generatePaths();
 
     for(PathSet currentPaths : paths){
@@ -70,5 +73,9 @@ int main()
 
         delete[] result;
     }
+
+    timer.stop();
+    std::cout << "Cuda Gaussian Blur Runtime (ms): " << timer.get_duration_ms() << "\n";
+
     return 0;
 }

@@ -19,6 +19,8 @@ int main(int argc, char* argv[]){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     
+    Timer timer;
+    timer.start();
     std::vector<PathSet> paths = generatePaths();
 
     // Cyclic partitioning
@@ -59,6 +61,9 @@ int main(int argc, char* argv[]){
         delete[] result;
     }
     
+    timer.stop();
+    std::cout << "MPI Gaussian Blur Runtime (ms): " << timer.get_duration_ms() << "\n";
+
     MPI_Finalize();
     return 0;
 }
