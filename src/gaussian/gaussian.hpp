@@ -11,7 +11,7 @@
 #endif
 
 //probs cant do this on gpu bc/ of the math? idk tho
-double* create_gaussian_filter(int size, const double sigma);
+double* create_gaussian_filter(int & ret_filter_output_size, int size, const double sigma);
 DEVICE rgb apply_gaussian_filter(const double* filter, int size, const rgb* image, const int height, const int width, const  int x, const int y);
 
 //filter = gaussian filter
@@ -50,11 +50,12 @@ DEVICE rgb apply_gaussian_filter(const double* filter, int size, const rgb* imag
 }
 
 //filter (x,y) = filter[y * size + x]
-double* create_gaussian_filter(int size, const double sigma = 3.0){
+double* create_gaussian_filter(int & ret_filter_output_size, int size, const double sigma = 3.0){
     size = size % 2 == 0 ? size + 1 : size;
     double center = (size - 1) / 2.0;
     double sum = 0.0;
     double* filter = new double[size * size];
+    ret_filter_output_size = size * size;
 
     for(int i = 0; i < size; i++){
         for (int j = 0; j < size; j++){

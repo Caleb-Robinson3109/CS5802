@@ -40,7 +40,8 @@ int main(int argc, char* argv[]){
 
         int filter_size = 11;
 
-        double* gaussian_filter = create_gaussian_filter(filter_size);
+        int filter_output_size = 0;
+        double* gaussian_filter = create_gaussian_filter(filter_output_size, filter_size);
 
         // apply filter
         int j = 0;
