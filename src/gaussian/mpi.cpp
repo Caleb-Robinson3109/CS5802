@@ -6,10 +6,7 @@
 #include <vector>
 #include <stdio.h>
 
-// NOTE: replace with:
-// #include <mpi.h>
-// on campus machines
-#include <openmpi-x86_64/mpi.h>
+#include <mpi.h>
 
 int main(int argc, char* argv[]){
 
