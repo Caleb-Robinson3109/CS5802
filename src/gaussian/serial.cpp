@@ -1,6 +1,7 @@
 #include "bitmap.hpp"
 #include "gaussian.hpp"
 #include "pathutil.hpp"
+#include "timerutil.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
