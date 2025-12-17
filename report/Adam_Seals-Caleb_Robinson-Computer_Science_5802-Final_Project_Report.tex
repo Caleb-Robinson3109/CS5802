@@ -1,0 +1,285 @@
+\documentclass[10pt]{article}
+
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+
+
+\title{MPI And CUDA Image Overlay And Gaussian Blur Performance}
+
+\author{Adam Seals, Caleb Robinson}
+
+\begin{document}
+	\maketitle
+	\section{Introduction}
+	This project will look at MPI and CUDA parallelization for two different image manipulation algorithms: overlay, and Gaussian blur. We will compare against a serial implementation of the algorithms. We will be measuring the runtime of the programs, speed up, and efficiency. We want to find out the fastest method to run both of these algorithms for a batch of one hundred images. The code can be found on GitHub at \url{https://github.com/Caleb-Robinson3109/CS5802}
+	\section{Methodology}
+	\subsection{Experimental Setup}
+	Because we are working with images parallelization is not hard to conceptualize how each pixel can be treated as a possible process that can be done separately from the rest of the image. Each channel of the pixel, red, green, and blue, can be further parallelized, but for this experiment each channel will be calculated as apart of the whole pixel.
+	\subsection{Implementation}
+	The images are a 800x800 24-bit bitmap image. The number of processes that will be used for MPI are one, two, four, eight, sixteen, and thirty-two. They will be tested with a batch of 100 images. The fastest of the different parallelizations will be compared against the serial implementation for larger batch sizes of 500, and 1000, to see how it will scale with more images. For consistency all programs will be compiled with the -O2 flag, and be run on the campus Mill HPC. The final result will be an average of 3 trials for each program.
+	\subsection{Overlay}
+	The overlay algorithm combines a base image (B), and an upper layer (L) into an new image (I). It does this in a way where the dark parts of the image get darker, and the light parts of the image get lighter. Giving the combined image a more contrast. For each channel of the pixel the following formula is calculated. 
+	\[
+	I(B, L) =
+	\begin{cases}
+		\dfrac{2BL}{255}, & B < 128 \\[6pt]
+		255 -  \dfrac{2(255 - B)(255 - L)}{255} , & B \ge 128
+	\end{cases}
+	\]
+	\subsection{Gaussian Blur}
+	Gaussian blur is a popular image blurring algorithm. for our experiments will will have a filter size of 11x11 and a $\sigma$ of 3. With I being the image with the Gaussian filter applied to it, and G being the Gaussian filter. The creation of the Gaussian filter was not parallelized but the application of the filter to a pixel is.
+	\[
+	G(x, y) =
+	\frac{1}{2\pi\sigma^2}
+	\exp\!\left(
+	-\frac{x^2 + y^2}{2\sigma^2}
+	\right)
+	\]
+	\[
+	I(x, y)
+	=
+	\sum_{i=-k}^{k}
+	\sum_{j=-k}^{k}
+	I(x+i, y+j)\, G(i, j)
+	\]
+	\section{Experimental Results}
+	\subsection{Overlay}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{img1.jpg}
+		\caption*{Base image (B) used for overlay}
+	\end{figure}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{img2.jpg}
+		\caption*{Upper layer image (L) used for overlay}
+	\end{figure}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{overlay.jpg}
+		\caption*{Overlay image (I)}
+	\end{figure}
+	\subsection{Gaussian Blur}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{img1.jpg}
+		\caption*{Pre-Gaussian blur image}
+	\end{figure}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{gaussian.jpg}
+		\caption*{Post-Gaussian blur image}
+	\end{figure}
+	\subsection{Run Time}
+	\subsubsection{Overlay}
+	\begin{center}
+	\begin{tabular}{ |p{3cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
+		\hline
+		\multicolumn{5}{|c|}{Program Run Time (ms)} \\
+		\hline
+		Program & Trial 1 & Trial 2 & Trial 3 & Average \\
+		\hline
+		Serial & 4082 & 4290 & 5282 & 4584.66 \\
+		MPI (1 process) & 2642 & 2635 & 2637 & 2638 \\
+		MPI (2 processes) & 1275 & 1467 & 1478 & 1473.33 \\
+		MPI (4 processes) & 873 & 874 & 865 & 870.66 \\
+		MPI (8 processes) & 600 & 599 & 598 & 599 \\
+		MPI (16 processes) & 1069 & 1044 & 1243 & 1118.66 \\
+		MPI (32 processes) & 2234 & 1266 & 1174 & 1558 \\
+		CUDA & 3238 & 5164 & 5019 & 4473.66 \\
+		\hline
+	\end{tabular}
+\end{center}
+
+	\subsubsection{Gaussian Blur}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
+			\hline
+			\multicolumn{5}{|c|}{Program Run Time (ms)} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 & Average \\
+			\hline
+			Serial & 32153 & 21373 & 21132 & 24886 \\
+			MPI (1 process) & 11498 & 11500 & 11506 & 11501.33 \\
+			MPI (2 processes) & 5875 & 5884 & 5879 & 5879.33 \\
+			MPI (4 processes) & 2972 & 2979 & 2971 & 2974 \\
+			MPI (8 processes) & 1572 & 1602 & 1592 & 1588.66 \\
+			CUDA & 3228 & 3238 & 5019 & 3828.33 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\subsection{Speed Up}
+	\subsubsection{Overlay}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{2cm}| }
+		\hline
+		\multicolumn{2}{|c|}{Average Run Time Speed Up Compared To Serial (Serial / Program)} \\
+		\hline
+		Program & Speed Up \\
+		\hline
+		Serial & 1 \\
+		MPI (1 process) & 1.738 \\
+		MPI (2 processes) & 3.112 \\
+		MPI (4 processes) & 5.266 \\
+		MPI (8 processes) & 7.654 \\
+		MPI (16 processes) & 4.098 \\
+		MPI (32 processes) & 2.943 \\
+		CUDA & 1.025 \\
+		\hline
+	\end{tabular}
+\end{center}
+	\subsubsection{Gaussian Blur}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{2cm}| }
+			\hline
+			\multicolumn{2}{|c|}{Average Run Time Speed Up Compared To Serial (Serial / Program)} \\
+			\hline
+			Program & Speed Up \\
+			\hline
+			Serial & 1 \\
+			MPI (1 process) & 2.164 \\
+			MPI (2 processes) & 4.233 \\
+			MPI (4 processes) & 8.368 \\
+			MPI (8 processes) & 15.665 \\
+			CUDA & 6.500 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\subsection{MPI Efficiency}
+	\subsubsection{Overlay}
+	\begin{center}
+	\begin{tabular}{ |p{3cm}|p{2cm}|p{2cm}| }
+		\hline
+		\multicolumn{3}{|c|}{MPI Speed Up and Efficiency} \\
+		\hline
+		Program & Speed Up & Efficiency \\
+		\hline
+		MPI (1 process) & 1 & 1 \\
+		MPI (2 processes) & 1.790 & 0.895 \\
+		MPI (4 processes) & 3.030 & 0.757 \\
+		MPI (8 processes) & 4.404 & 0.551 \\
+		MPI (16 processes) & 2.358 & 0.147 \\
+		MPI (32 processes) & 0.00115 & 0.0000391 \\
+		\hline
+	\end{tabular}
+\end{center}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{overlay-mpi.png}
+		\caption*{}
+	\end{figure}
+	\subsubsection{Gaussian Blur}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{2cm}|p{2cm}| }
+			\hline
+			\multicolumn{3}{|c|}{MPI Speed Up and Efficiency} \\
+			\hline
+			Program & Speed Up & Efficiency \\
+			\hline
+			MPI (1 process) & 1 & 1 \\
+			MPI (2 processes) & 1.956 & 0.978 \\
+			MPI (4 processes) & 3.867 & 0.967 \\
+			MPI (8 processes) & 7.240 & 0.905 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{gaussian-mpi.png}
+		\caption*{}
+	\end{figure}
+	\subsection{Batch Size Scalability}
+	\subsubsection{Overlay}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}| }
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability (ms)} \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability Average (ms)} \\
+			\hline
+			Program & n = 100 Images & n = 500 Images & n = 1000 Images \\
+			\hline
+			Serial & 4584.66 & 22608.33 & 65882.66 \\
+			MPI (8 processes) & 599 & 4421.66 & 28346.66 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 100 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 4082 & 4390 & 5282 \\
+			MPI (8 processes) & 600 & 599 & 598 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 500 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 20877 & 24556 & 22392 \\
+			MPI (8 processes) & 4393 & 4447 & 4425 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 1000 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 67481 & 65632 & 64535 \\
+			MPI (8 processes) & 18339 & 18351 & 18350 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{scale-overlay.png}
+		\caption*{}
+	\end{figure}
+	\subsubsection{Gaussian Blur}
+	\begin{center}
+		\begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}| }
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability (ms)} \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability Average (ms)} \\
+			\hline
+			Program & n = 100 Images & n = 500 Images & n = 1000 Images \\
+			\hline
+			Serial & 24886 & 106382 & 220721 \\
+			MPI (8 processes) & 1588.66 & 16830.33 & 40877.66 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 100 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 32153 & 21373 & 21132 \\
+			MPI (8 processes) & 1572 & 1602 & 1592 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 500 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 107309 & 105868 & 105969 \\
+			MPI (8 processes) & 16724 & 16589 & 17178 \\
+			\hline
+			\multicolumn{4}{|c|}{Image Batch Size Scalability n = 1000 Trials} \\
+			\hline
+			Program & Trial 1 & Trial 2 & Trial 3 \\
+			\hline
+			Serial & 225681 & 219207 & 217275 \\
+			MPI (8 processes) & 46327 & 38260 & 38046 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{scale-gaussian.png}
+		\caption*{}
+	\end{figure}
+	\section{Conclusion}
+	There are three main takeaways from this project. One MPI is faster then serial, two CUDA speed up is limited by image size, and three the efficiency differences between overlay and Gaussian blur.
+	
+	On every trial for every amount of processes for MPI, MPI outperformed the serial program in run time. Even thought for overlay sixteen and thirty-two processes where not efficient and caused a slow down compared to eight processes. For overlay eight processes had the lowest run time, and two processes had the highest efficiency. As processes where added to overlay the efficiency significantly went down. For Gaussian blur we where unable to test sixteen and thirty-two processes, because of complications with the Mill HPC. Despite that With increased processes Gaussian blur showed remarkable speed up, and there was no point where runtime went higher as processes increase. Each number of processes tested for Gaussian blur the efficiencies stayed above 0.9.
+	
+	Another notable part of the results is that the CUDA programs did not preform as good as the MPI programs. We believe this would change with a larger images. As image size increase you can increase the amount of threads the GPU uses easily, whereas the amount of processes MPI uses has an upper limit of reasonable use.
+	
+	The last takeaway is the efficiency difference between Gaussian blur and overlay. It is significant that the Gaussian blur's efficiency seems to settle around 0.9. Even if at some point the overhead of having many processes will drag down the efficiency. Compared to overlay's efficiency that from the testing already is suffering from the overhead. The efficiency of Gaussian blur can be seen in the increased image batch size. At n = 1000 images there is a larger gap in the serial and MPI programs for Gaussian blur, as apposed to overlay. This means that more of the Gaussian blur function is parallelize compared to overlay. This at first would not have been the guessed, because the filter for Gaussian blur is not done in parallel. But the high computational cost of the matrix operations of Gaussian blur that are parallel greatly outweigh the cost of creating the filter.
+\end{document}
