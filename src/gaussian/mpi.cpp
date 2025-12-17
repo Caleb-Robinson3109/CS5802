@@ -10,6 +10,8 @@
 #include <mpi.h>
 
 int main(int argc, char* argv[]){
+    Timer timer;
+    timer.start();
 
     MPI_Init (&argc, &argv);
     int nprocs;
@@ -17,8 +19,6 @@ int main(int argc, char* argv[]){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     
-    Timer timer;
-    timer.start();
     std::vector<PathSet> paths = generatePaths();
 
     // Cyclic partitioning
@@ -57,11 +57,16 @@ int main(int argc, char* argv[]){
         blurred.save(currentPaths.outputPath);
 
         delete[] result;
+        delete[] gaussian_filter;
     }
     
-    timer.stop();
-    std::cout << "MPI Gaussian Blur Runtime (ms): " << timer.get_duration_ms() << "\n";
-
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
+    
+    timer.stop();
+
+    if(rank == 0)
+        std::cout << "MPI Gaussian Blur Runtime (ms): " << timer.get_duration_ms() << "\n";
+    
     return 0;
 }

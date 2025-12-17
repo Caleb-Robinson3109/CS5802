@@ -56,9 +56,13 @@ int main(int argc, char* argv[]){
         delete[] result;
     }
 
-    timer.stop();
-    std::cout << "MPI Overlay Runtime (ms): " << timer.get_duration_ms() << "\n";
-
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
+    
+    timer.stop();
+    
+    if(rank == 0)
+        std::cout << "MPI Overlay Runtime (ms): " << timer.get_duration_ms() << "\n";
+    
     return 0;
 }
