@@ -19,7 +19,7 @@
 	\subsection{Experimental Setup}
 	Because we are working with images parallelization is not hard to conceptualize how each pixel can be treated as a possible process that can be done separately from the rest of the image. Each channel of the pixel, red, green, and blue, can be further parallelized, but for this experiment each channel will be calculated as apart of the whole pixel.
 	\subsection{Implementation}
-	The images are a 800x800 24-bit bitmap image. The number of processes that will be used for MPI are one, two, four, eight, sixteen, and thirty-two. They will be tested with a batch of 100 images. The fastest of the different parallelizations will be compared against the serial implementation for larger batch sizes of 500, and 1000, to see how it will scale with more images. For consistency all programs will be compiled with the -O2 flag, and be run on the campus Mill HPC. The final result will be an average of 3 trials for each program.
+	The images are a 800x800 24-bit bitmap image. The number of processes that will be used for MPI are one, two, four, and eight. They will be tested with a batch of 100 images. The fastest of the different parallelizations will be compared against the serial implementation for larger batch sizes of 500, and 1000, to see how it will scale with more images. For consistency all programs will be compiled with the -O2 flag, and be run on the campus Mill HPC. The final result will be an average of 3 trials for each program.
 	\subsection{Overlay}
 	The overlay algorithm combines a base image (B), and an upper layer (L) into an new image (I). It does this in a way where the dark parts of the image get darker, and the light parts of the image get lighter. Giving the combined image a more contrast. For each channel of the pixel the following formula is calculated. 
 	\[
@@ -87,8 +87,6 @@
 		MPI (2 processes) & 1275 & 1467 & 1478 & 1473.33 \\
 		MPI (4 processes) & 873 & 874 & 865 & 870.66 \\
 		MPI (8 processes) & 600 & 599 & 598 & 599 \\
-		MPI (16 processes) & 1069 & 1044 & 1243 & 1118.66 \\
-		MPI (32 processes) & 2234 & 1266 & 1174 & 1558 \\
 		CUDA & 3238 & 5164 & 5019 & 4473.66 \\
 		\hline
 	\end{tabular}
@@ -125,8 +123,6 @@
 		MPI (2 processes) & 3.112 \\
 		MPI (4 processes) & 5.266 \\
 		MPI (8 processes) & 7.654 \\
-		MPI (16 processes) & 4.098 \\
-		MPI (32 processes) & 2.943 \\
 		CUDA & 1.025 \\
 		\hline
 	\end{tabular}
@@ -161,8 +157,6 @@
 		MPI (2 processes) & 1.790 & 0.895 \\
 		MPI (4 processes) & 3.030 & 0.757 \\
 		MPI (8 processes) & 4.404 & 0.551 \\
-		MPI (16 processes) & 2.358 & 0.147 \\
-		MPI (32 processes) & 0.00115 & 0.0000391 \\
 		\hline
 	\end{tabular}
 \end{center}
@@ -277,9 +271,9 @@
 	\section{Conclusion}
 	There are three main takeaways from this project. One MPI is faster then serial, two CUDA speed up is limited by image size, and three the efficiency differences between overlay and Gaussian blur.
 	
-	On every trial for every amount of processes for MPI, MPI outperformed the serial program in run time. Even thought for overlay sixteen and thirty-two processes where not efficient and caused a slow down compared to eight processes. For overlay eight processes had the lowest run time, and two processes had the highest efficiency. As processes where added to overlay the efficiency significantly went down. For Gaussian blur we where unable to test sixteen and thirty-two processes, because of complications with the Mill HPC. Despite that With increased processes Gaussian blur showed remarkable speed up, and there was no point where runtime went higher as processes increase. Each number of processes tested for Gaussian blur the efficiencies stayed above 0.9.
+	On every trial for every amount of processes for MPI, MPI outperformed the serial program in run time. For overlay eight processes had the lowest run time, and two processes had the highest efficiency. As processes where added to overlay the efficiency significantly went down. For both Gaussian blur and overlay we where unable to test sixteen and thirty-two processes, because of complications with the Mill HPC. Despite that With increased processes Gaussian blur showed remarkable speed up, and there was no point where runtime went higher as processes increase. Each number of processes tested for Gaussian blur the efficiencies stayed above 0.9.
 	
 	Another notable part of the results is that the CUDA programs did not preform as good as the MPI programs. We believe this would change with a larger images. As image size increase you can increase the amount of threads the GPU uses easily, whereas the amount of processes MPI uses has an upper limit of reasonable use.
 	
-	The last takeaway is the efficiency difference between Gaussian blur and overlay. It is significant that the Gaussian blur's efficiency seems to settle around 0.9. Even if at some point the overhead of having many processes will drag down the efficiency. Compared to overlay's efficiency that from the testing already is suffering from the overhead. The efficiency of Gaussian blur can be seen in the increased image batch size. At n = 1000 images there is a larger gap in the serial and MPI programs for Gaussian blur, as apposed to overlay. This means that more of the Gaussian blur function is parallelize compared to overlay. This at first would not have been the guessed, because the filter for Gaussian blur is not done in parallel. But the high computational cost of the matrix operations of Gaussian blur that are parallel greatly outweigh the cost of creating the filter.
+	The last takeaway is the efficiency difference between Gaussian blur and overlay. It is significant that the Gaussian blur's efficiency seems to settle around 0.9. Even if at some point the overhead of having many processes will drag down the efficiency. Compared to overlay's efficiency that from the testing already is suffering from the overhead. The efficiency of Gaussian blur can be seen in the increased image batch size. At n = 1000 images there is a larger gap in the serial and MPI programs for Gaussian blur, as apposed to overlay. This means that more of the Gaussian blur function is parallelized compared to overlay. This at first would not have been the guessed, because the filter for Gaussian blur is not done in parallel. But the high computational cost of the matrix operations of Gaussian blur that are parallel greatly outweigh the cost of creating the filter.
 \end{document}

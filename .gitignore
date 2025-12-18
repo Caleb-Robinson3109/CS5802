@@ -4,3 +4,7 @@ out.bmp
 src/*.bmp
 tags
 out_img/*
+report.aux
+report.pdf
+report.log
+report.synctex.gz
